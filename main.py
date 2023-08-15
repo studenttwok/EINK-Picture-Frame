@@ -105,22 +105,70 @@ def EPD_IT8951_WriteData(Buff):
     SPI.writebytes([msb(Buff), lsb(Buff)])
     digital_write(CS_PIN, 1)
 
+'''
+# Wordd by Word, slow, but reliable
 # Buff is List of 2 byte [0x1111,0x2222]
 def EPD_IT8951_WriteNData(Buff):
     # UWORD Write_Preamble = 0x0000;
     #print("WriteNData")
     #print(Buff)
+    startTs = time.time()
+    print(startTs)
 
     EPD_IT8951_ReadBusy()
     digital_write(CS_PIN, 0)
     SPI.writebytes([0x00, 0x00])
 
     for i in range(0, len(Buff)):
-        EPD_IT8951_WriteNData
+        #EPD_IT8951_WriteNData
         SPI.writebytes([ msb(Buff[i]), lsb(Buff[i]) ])
 
     digital_write(CS_PIN, 1)
 
+    endTs = time.time()
+    print(endTs)
+    print("Used: %.2f"%((endTs-startTs)))
+'''
+
+# Buff is List of 2 byte [0x1111,0x2222]
+def EPD_IT8951_WriteNData(Buff):
+    # UWORD Write_Preamble = 0x0000;
+    #print("WriteNData")
+    #print(Buff)
+    startTs = time.time()
+    print(startTs)
+
+    EPD_IT8951_ReadBusy()
+    digital_write(CS_PIN, 0)
+    SPI.writebytes([0x00, 0x00])
+
+
+    # batch write
+    batchSize = 1024
+    totalLength = len(Buff)
+    totalBatchNumber = int(totalLength / batchSize)
+    if totalLength % batchSize != 0:
+        totalBatchNumber += 1
+    for i in range(0, totalBatchNumber):
+        endIdx = (i * batchSize) + batchSize
+        if endIdx > totalLength:
+            endIdx = totalLength
+
+        tmpBuffer = Buff[(i * batchSize):endIdx]
+        #print(i*batchSize)
+        #print(endIdx)
+        tmpBuffer2 = []
+        for j in range(0, len(tmpBuffer)):
+            #EPD_IT8951_WriteNData
+            tmpBuffer2+= [msb(tmpBuffer[j]), lsb(tmpBuffer[j])]
+
+        SPI.writebytes(tmpBuffer2)
+
+    digital_write(CS_PIN, 1)
+
+    endTs = time.time()
+    print(endTs)
+    print("Used: %.2f"%((endTs-startTs)))
 
 # return A WORD, 0xFFFF
 def EPD_IT8951_ReadData():
@@ -445,13 +493,9 @@ def display(filename):
 
 
     # Update frame
-    x = 1072
-    y = 804
-
-    #imgInfo = epd_load_image_file_to_device('./pic/1872x1404.bmp', 0, 0)
-    #imgInfo = epd_load_image_file_to_device('./pic/800x600.bmp', x, y)
+    #imgInfo = epd_load_image_file_to_device(filename, 0, 0)
     #epd_fill_device(0x0000, sysInfo)
-    epd_load_and_center_image_file_to_device('./pic/800x600.bmp', sysInfo)
+    epd_load_and_center_image_file_to_device(filename, sysInfo)
 
     # Refresh Display
     #epd_refresh_region(x, y, imgInfo['width'], imgInfo['height'], 2)
