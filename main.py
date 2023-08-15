@@ -4,6 +4,7 @@ import RPi.GPIO
 import struct
 from PIL import Image
 import numpy as np
+import sys
 
 #Commands
 IT8951_TCON_SYS_RUN = 0x0001
@@ -352,6 +353,46 @@ def epd_load_image_file_to_device(filepath, x, y):
 
     return imgInfo
 
+def epd_load_and_center_image_file_to_device(filepath, sysInfo):
+    canvas = Image.new("L", (sysInfo['panelW'], sysInfo['panelH']), 0xff)
+    imgBuf = Image.open(filepath).convert('L')
+
+    # check long length
+    # assume it is loadscape
+    scale = canvas.width / imgBuf.width
+    if (imgBuf.height > imgBuf.width):
+        # port
+        # calculate the scale
+        scale = canvas.height / imgBuf.height
+
+    imgBuf = imgBuf.resize((int(imgBuf.width * scale), int(imgBuf.height * scale)))
+
+    #imgBuf.thumbnail((sysInfo['panelW'], sysInfo['panelH']))
+
+    # scalee and paste the file
+    x = int((sysInfo['panelW'] - imgBuf.width) / 2)
+    y = int((sysInfo['panelH'] - imgBuf.height) / 2)
+    canvas.paste(imgBuf, (x,y))
+
+    # Prepare the image buffer
+    imgBuf = canvas.convert('L')
+    width = imgBuf.width
+    height = imgBuf.height
+    imgBuf = pack_pixels(list(imgBuf.tobytes()), 2)
+
+    # construct the imgInfo
+    imgInfo = dict()
+    imgInfo['rotate_mode'] = 0
+    imgInfo['endian_type'] = 0 # LITTLE
+    imgInfo['pixel_format'] = 2 #M_4BPP (16 bit 2^4 Grey scale)
+    imgInfo['x'] = 0
+    imgInfo['y'] = 0
+    imgInfo['width'] = sysInfo['panelW']
+    imgInfo['height'] = sysInfo['panelH']
+    epd_load_image_buffer(imgBuf, imgInfo)
+
+    return imgInfo
+
 
 # color ex: 0xffff = Black, 0x0000 = White, one word(2bytes) = 4 pixels
 def epd_fill_device(color, sysInfo):
@@ -376,47 +417,59 @@ def epd_refresh_whole_screen(sysInfo):
 def epd_clear_whole_screen(sysInfo):
     epd_refresh_region(0, 0, sysInfo['panelW'], sysInfo['panelH'], 0)
 
-##########
-# init SPI and GPIO
-init_spi_and_gpio()
+def display(filename):
+    ##########
+    # init SPI and GPIO
+    init_spi_and_gpio()
 
-# reset EPD
-epd_reset()
+    # reset EPD
+    epd_reset()
 
-# system run
-epd_start()
+    # system run
+    epd_start()
 
-# GetSystemInfo
-sysInfo = epd_get_system_info()
+    # GetSystemInfo
+    sysInfo = epd_get_system_info()
 
-# enable i80 packed mode
-epd_enable_i80_format()
+    # enable i80 packed mode
+    epd_enable_i80_format()
 
-# VCOM
-epd_update_vcom(-1.6)
+    # VCOM
+    epd_update_vcom(-1.6)
 
-# set the img buffer address
-epd_set_buffer_memory_address(sysInfo)
+    # set the img buffer address
+    epd_set_buffer_memory_address(sysInfo)
 
-# clear everything first
-epd_clear_whole_screen(sysInfo)
+    # clear everything first
+    epd_clear_whole_screen(sysInfo)
 
 
-# Update frame
-x = 0
-y = 0
+    # Update frame
+    x = 1072
+    y = 804
 
-#imgInfo = epd_load_image_file_to_device('./pic/1872x1404.bmp', 0, 0)
-imgInfo = epd_load_image_file_to_device('./pic/800x600.bmp', x, y)
-#epd_fill_device(0x0000, sysInfo)
+    #imgInfo = epd_load_image_file_to_device('./pic/1872x1404.bmp', 0, 0)
+    #imgInfo = epd_load_image_file_to_device('./pic/800x600.bmp', x, y)
+    #epd_fill_device(0x0000, sysInfo)
+    epd_load_and_center_image_file_to_device('./pic/800x600.bmp', sysInfo)
 
-# Refresh Display
-#epd_refresh_region(x, y, imgInfo['width'], imgInfo['height'], 2)
-epd_refresh_whole_screen(sysInfo)
+    # Refresh Display
+    #epd_refresh_region(x, y, imgInfo['width'], imgInfo['height'], 2)
+    epd_refresh_whole_screen(sysInfo)
 
-# Put EPD to Sleep
-epd_sleep()
+    # Put EPD to Sleep
+    epd_sleep()
 
-# Module Exit
-deinit_api_and_gpio()
+    # Module Exit
+    deinit_api_and_gpio()
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+       print("Usage: python main.py example.jpg")
+       sys.exit()
+    else:
+        filename = sys.argv[1]
+        display(filename)
+
 
