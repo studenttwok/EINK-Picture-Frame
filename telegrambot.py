@@ -17,8 +17,78 @@ logging.basicConfig(
     level=logging.INFO
 )
 
+
+# cache a list for photo showing
+carousel_photo_list = []
+currentPhotoIdx = -1
+carousel_task = None
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
+
+
+async def start_carousel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # get the gilee
+    global carousel_photo_list, currentPhotoIdx, carousel_task
+
+    carousel_photo_list = os.listdir(storageFolder)
+    interval = 60
+    if len(context.args) == 1:
+        interval = int(context.args[0])
+
+    if len(carousel_photo_list) == 0:
+        await update.message.reply_text("No photos yet. Start by sending me a photo.", reply_markup = None)
+        return
+
+    if interval < 30 or interval > 86400:
+        await update.message.reply_text("Interval must between 30 to 86400 seconds", reply_markup = None)
+        return
+
+
+    currentPhotoIdx = 0
+    await update.message.reply_text("Carousel is going to start", reply_markup = None)
+
+    # set the task
+    if carousel_task != None:
+        carousel_task.schedule_removal()
+
+    carousel_task = context.job_queue.run_repeating(callback_update_carousel, interval=interval, first=10)
+
+
+async def callback_update_carousel(context: ContextTypes.DEFAULT_TYPE):
+    # Beep the person who called this alarm:
+    #await context.bot.send_message(chat_id=context.job.chat_id, text=f'BEEP {context.job.data}!')
+    global carousel_photo_list, currentPhotoIdx, carousel_task
+    #print(carousel_photo_list)
+    if len(carousel_photo_list) == 0:
+        # do nothing...
+        return
+
+    if currentPhotoIdx >= len(carousel_photo_list):
+        currentPhotoIdx = 0 # reset back
+
+    file_path = storageFolder + "/" + carousel_photo_list[currentPhotoIdx]
+    # check if the photo exists
+    if not os.path.isfile(file_path):
+        # skip to next, and try again in next iternation
+        currentPhotoIdx += 1
+        return
+
+    epd.display(file_path)
+    currentPhotoIdx += 1
+
+async def stop_carousel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global carousel_photo_list, currentPhotoIdx, carousel_task
+
+    if carousel_task == None:
+        await update.message.reply_text("Carousel is not running", reply_markup = None)
+        return
+
+    carousel_task.schedule_removal()
+    await update.message.reply_text("Carousel is going to stop", reply_markup = None)
+
+
+
 
 async def list_images(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file_list = os.listdir(storageFolder)
@@ -91,7 +161,6 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
 
 
-
 async def media(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file_path = ""
     new_file = None
@@ -156,6 +225,8 @@ def telegram_client(token):
     remove_handler = CommandHandler('remove', remove_image)
     clear_screen_handler = CommandHandler('clear', clear_screen)
     refresh_screen_handler = CommandHandler('refresh', refresh_screen)
+    start_carousel_handler = CommandHandler('start_carousel', start_carousel)
+    stop_carousel_handler = CommandHandler('stop_carousel', stop_carousel)
 
     # command
     application.add_handler(start_handler)
@@ -164,6 +235,8 @@ def telegram_client(token):
     application.add_handler(remove_handler)
     application.add_handler(clear_screen_handler)
     application.add_handler(refresh_screen_handler)
+    application.add_handler(start_carousel_handler)
+    application.add_handler(stop_carousel_handler)
 
     # content handler
     application.add_handler(echo_handler)
