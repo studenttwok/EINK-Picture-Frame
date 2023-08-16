@@ -53,7 +53,18 @@ Feel free to use telegrambot.py and epd.py as the starting point and create your
     stop_carousel - Stop Carousel
 
 # Future Development
-I create this POC hobby project in my time. This program code is imperfect (Naming convention and task scheduling, etc.) and can only be used in production with suitable modification. I may improve it when I have more time. If you would like to contribute, PR is welcomed.
+I create this POC hobby project in my time. This program code is imperfect (Naming convention and task scheduling, etc.) and can only be used in production with suitable modification. I may improve it when I have more time. If you would like to contribute, PR is welcome.
+
+Modifications (like buffer size and refresh mode) can be made to support the below Waveshare EPD:
+
+        "6inch e-Paper HAT(800,600)"
+        "6inch HD e-Paper HAT(1448,1072)"
+        "6inch HD touch e-Paper HAT(1448,1072)"
+        "9.7inch e-Paper HAT(1200,825)"
+        "7.8inch e-Paper HAT(1872,1404)"
+        "10.3inch e-Paper HAT(1872,1404)"
+        
+They have the same communication protocol and the same HAT.
 
 
 # Libraries
