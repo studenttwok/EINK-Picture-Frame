@@ -1,4 +1,5 @@
 spidev
 RPi.GPIO
 pillow
-
+python-telegram-bot
+python-telegram-bot[job-queue]
