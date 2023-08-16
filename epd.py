@@ -396,9 +396,17 @@ def epd_load_image_file_to_device(filepath, x, y):
 
     return imgInfo
 
-def epd_load_and_center_image_file_to_device(filepath, sysInfo):
+def epd_load_and_center_image_file_to_device(filepath, sysInfo, auto_rotate = True):
     canvas = Image.new("L", (sysInfo['panelW'], sysInfo['panelH']), 0xff)
     imgBuf = Image.open(filepath).convert('L')
+
+    # always show it in landscape
+    if (auto_rotate):
+        if imgBuf.height > imgBuf.width:
+            # rotate it from port to landscape
+            imgBuf = imgBuf.rotate(90,expand=True)
+
+
 
     # check long length
     # assume it is loadscape
@@ -461,6 +469,72 @@ def epd_clear_whole_screen(sysInfo):
     epd_refresh_region(0, 0, sysInfo['panelW'], sysInfo['panelH'], 0)
 
 
+#####################
+def clear_screen():
+    ##########
+    # init SPI and GPIO
+    init_spi_and_gpio()
+
+    # reset EPD
+    epd_reset()
+
+    # system run
+    epd_start()
+
+    # GetSystemInfo
+    sysInfo = epd_get_system_info()
+
+    # enable i80 packed mode
+    epd_enable_i80_format()
+
+    # VCOM
+    epd_update_vcom(-1.6)
+
+    # set the img buffer address
+    epd_set_buffer_memory_address(sysInfo)
+
+    # Fill the screen buffer
+    epd_fill_device(0xffff, sysInfo)
+
+    # refresh screen
+    epd_refresh_whole_screen(sysInfo)
+
+    # Put EPD to Sleep
+    epd_sleep()
+
+    # Module Exit
+    deinit_api_and_gpio()
+
+def refresh_screen():
+    ##########
+    # init SPI and GPIO
+    init_spi_and_gpio()
+
+    # reset EPD
+    epd_reset()
+
+    # system run
+    epd_start()
+
+    # GetSystemInfo
+    sysInfo = epd_get_system_info()
+
+    # enable i80 packed mode
+    epd_enable_i80_format()
+
+    # VCOM
+    epd_update_vcom(-1.6)
+
+    # refresh screen
+    epd_refresh_whole_screen(sysInfo)
+
+    # Put EPD to Sleep
+    epd_sleep()
+
+    # Module Exit
+    deinit_api_and_gpio()
+
+
 def display(filename):
     ##########
     # init SPI and GPIO
@@ -485,17 +559,17 @@ def display(filename):
     epd_set_buffer_memory_address(sysInfo)
 
     # clear everything first
-    epd_clear_whole_screen(sysInfo)
+    #epd_clear_whole_screen(sysInfo)
 
 
     # Update frame
-    x = 1072
-    y = 804
-
     #imgInfo = epd_load_image_file_to_device('./pic/1872x1404.bmp', 0, 0)
     #imgInfo = epd_load_image_file_to_device('./pic/800x600.bmp', x, y)
     #epd_fill_device(0x0000, sysInfo)
     epd_load_and_center_image_file_to_device(filename, sysInfo)
+
+    # clear everything first
+    epd_clear_whole_screen(sysInfo)
 
     # Refresh Display
     #epd_refresh_region(x, y, imgInfo['width'], imgInfo['height'], 2)
