@@ -144,6 +144,10 @@ async def remove_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # show the photo
     os.remove(filePath)
+
+    # update 
+    global carousel_photo_list
+    carousel_photo_list = os.listdir(storageFolder)
     await update.message.reply_text("Photo is removed successfully")
 
 async def clear_screen(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -212,6 +216,11 @@ async def media(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Sending to EPD....")
     epd.display(file_path)
     await update.message.reply_text("Photo is displayed!")
+
+    # update
+    global carousel_photo_list
+    carousel_photo_list = os.listdir(storageFolder)
+
     #await context.bot.send_message(chat_id=update.effective_chat.id, text="Photo displayed")
 
 def telegram_client(token):
