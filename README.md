@@ -4,6 +4,10 @@ I bought an expensive E-Paper Device (EPD). How can I make the investment worthw
 Without enough time to build a dedicated  Human Machine Interface, I used Telegram as the communication interface.
 Commands can be sent as text messages, and image data can be sent as photo messages. Building a telegram bot and manipulating the image is easy in Python, but the control library is available in C only. I spent time implementing some methods in Python, and the result was satisfactory.
 
+# Demo Video
+[![Watch the video](https://i.ytimg.com/vi/TADT6oSMmqE/hqdefault.jpg)](https://youtu.be/TADT6oSMmqE)
+[![Watch the video](https://i.ytimg.com/vi/bvpBKvaGccw/hqdefault.jpg)](https://youtu.be/bvpBKvaGccw)
+
 # Requirment:
 * Waveshare 7.8inch HD e-Paper HAT (IT8951)
 * Raspberry Pi (Tested with Raspberry Pi Zero W)
@@ -76,4 +80,5 @@ They have the same communication protocol and the same HAT.
 # Reference:
 * https://www.waveshare.com/wiki/7.8inch_e-Paper_HAT
 * https://github.com/kleini/it8951/tree/master (Code of pack_pixels())
+
 
