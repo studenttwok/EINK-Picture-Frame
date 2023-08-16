@@ -85,6 +85,8 @@ async def stop_carousel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     carousel_task.schedule_removal()
+    carousel_task = None
+    currentPhotoIdx = -1
     await update.message.reply_text("Carousel is going to stop", reply_markup = None)
 
 
